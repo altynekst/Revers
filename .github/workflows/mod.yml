@@ -14,11 +14,15 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y apktool zipalign apksigner zip >/dev/null
-          # Находим, куда установился apktool, и делаем на него ссылку
-          APKTOOL_JAR=$(find /usr/share -name "apktool.jar" | head -n 1)
-          if [ -z "$APKTOOL_JAR" ]; then APKTOOL_JAR="/usr/share/java/apktool.jar"; fi
-          echo "APKTOOL_JAR=$APKTOOL_JAR" >> $GITHUB_ENV
+          sudo apt-get install -y zipalign apksigner zip >/dev/null
+      - name: Download apktool
+        run: |
+          # Скачиваем свежий apktool.jar прямо с официального репозитория
+          curl -sSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
+          # Скачиваем фреймворк для него (чтобы понимал Android)
+          curl -sSL -o framework.apk https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/framework-2.9.3.apk 2>/dev/null || true
+          # Инициализируем фреймворк
+          java -jar apktool.jar if framework.apk 2>/dev/null || true
       - name: Unpack, Patch and Rebuild classes.dex
         run: |
           mkdir -p work
@@ -28,15 +32,15 @@ jobs:
           
           for dex in classes*.dex; do
             # Декомпилируем DEX в smali
-            java -jar "$APKTOOL_JAR" d "$dex" -o "smali_$dex"
+            java -jar ../apktool.jar d "$dex" -o "smali_$dex" -f
             
             # Вырезаем рекламу
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
             
-            # Собираем обратно DEX
-            java -jar "$APKTOOL_JAR" b "smali_$dex" -o "$dex" -c
+            # Собираем обратно DEX (флаг -c копирует ресурсы без пересборки, чтобы не было OOM)
+            java -jar ../apktool.jar b "smali_$dex" -o "$dex" -c
             rm -rf "smali_$dex"
           done
           
