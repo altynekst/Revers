@@ -1,0 +1,22 @@
+name: Extract Localization
+on: workflow_dispatch
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install UnityPy
+      - name: Run extract
+        run: |
+          mkdir -p extract
+          unzip -q apk/NoomiUnlocked.apk "assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle" -d extract
+          python3 -c "import UnityPy, json; env = UnityPy.load('extract/assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle'); [open('extract/dump.json', 'a', encoding='utf-8').write(json.dumps(obj.read_typetree(), ensure_ascii=False) + '\n') for obj in env.objects if obj.type.name == 'MonoBehaviour']"
+          grep -oE '"[^"]+"' extract/dump.json | head -100 > extract/strings.txt || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dump
+          path: extract/
