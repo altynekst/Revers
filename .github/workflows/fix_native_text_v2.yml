@@ -1,4 +1,4 @@
-name: Fix Native Text
+name: Fix Native Text V2
 on: workflow_dispatch
 jobs:
   build:
@@ -9,25 +9,20 @@ jobs:
       - name: Patch
         run: |
           mkdir -p work && cd work
-          # Вытаскиваем сцену level1 из оригинального APK
           unzip -q ../apk/NoomiUnlocked.apk 'assets/bin/Data/level1'
           python3 - << 'PY'
           p = 'assets/bin/Data/level1'
           with open(p, 'rb') as f: data = bytearray(f.read())
           old = b'NOOMICLONE'
-          new = b'crack by tuman'
+          new = b'crack by t'
           idx = data.find(old)
           if idx != -1:
-              print(f'Нашли на позиции {idx}. Меняем...')
-              # Заменяем ровно столько байт, сколько было (10 байт), остальное обрезаем
-              data[idx:idx+10] = new[:10]
+              data[idx:idx+len(new)] = new
               with open(p, 'wb') as f: f.write(data)
-              print('Успешно заменено на crack by t')
-          else:
+              print(f'OK: Заменено на позиции {idx}')
           PY
           cd ..
           cp apk/NoomiUnlocked.apk final.apk
-          # Заменяем файл в APK без сжатия
           zip -q -0 -j final.apk work/assets/bin/Data/level1
       - name: Sign
         run: |
