@@ -20,7 +20,6 @@ jobs:
 import UnityPy, json
 path = "extract/assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle"
 env = UnityPy.load(path)
-found = []
 for obj in env.objects:
     if obj.type.name == "MonoBehaviour":
         try:
