@@ -17,16 +17,16 @@ jobs:
           mkdir -p extract
           unzip -q apk/NoomiUnlocked.apk "lib/arm64-v8a/libil2cpp.so" -d extract
           unzip -q apk/NoomiUnlocked.apk "assets/bin/Data/Managed/Metadata/global-metadata.dat" -d extract
-      - name: Download Il2CppDumper
+      - name: Clone and Build Il2CppDumper
         run: |
-          # Добавлен флаг -L для следования редиректам и проверка на ошибки
-          curl -L -sS -o Il2CppDumper.zip https://github.com/Perfare/Il2CppDumper/releases/download/v6.7.40/Il2CppDumper-net8-v6.7.40.zip
-          file Il2CppDumper.zip
-          unzip -q Il2CppDumper.zip -d Il2CppDumper
+          git clone https://github.com/Perfare/Il2CppDumper.git
+          cd Il2CppDumper
+          dotnet build Il2CppDumper/Il2CppDumper.csproj -c Release
+          cd ..
       - name: Run Dumper
         run: |
           cd extract
-          dotnet ../Il2CppDumper/Il2CppDumper.dll lib/arm64-v8a/libil2cpp.so assets/bin/Data/Managed/Metadata/global-metadata.dat out
+          dotnet ../Il2CppDumper/Il2CppDumper/bin/Release/net8.0/Il2CppDumper.dll lib/arm64-v8a/libil2cpp.so assets/bin/Data/Managed/Metadata/global-metadata.dat out
           ls -lh out/
       - name: Upload Results
         uses: actions/upload-artifact@v4
