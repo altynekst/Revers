@@ -1,0 +1,32 @@
+name: Smart Replace APK
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y zipalign apksigner python3
+      - name: Patch
+        run: |
+          mkdir -p work
+          unzip -q apk/NoomiUnlocked.apk 'assets/bin/Data/Managed/Metadata/global-metadata.dat' -d work
+          python3 - << 'PY'
+          p = 'work/assets/bin/Data/Managed/Metadata/global-metadata.dat'
+          old = b'NOOMIUNLOCKED'
+          new = b'crack by tuman'
+          with open(p, 'rb') as f: data = f.read()
+          if old in data:
+              with open(p, 'wb') as f: f.write(data.replace(old, new))
+          PY
+          # Копируем оригинал и обновляем в нем ТОЛЬКО этот файл, без сжатия
+          cp apk/NoomiUnlocked.apk final.apk
+          zip -q -0 -j final.apk work/assets/bin/Data/Managed/Metadata/global-metadata.dat
+      - name: Sign
+        run: |
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
+          zipalign -p 4 final.apk aligned.apk || cp final.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-Final.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-Final.apk
