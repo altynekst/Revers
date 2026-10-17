@@ -1,0 +1,36 @@
+name: AssetRipper Fix
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install tools
+        run: sudo apt-get update -qq && sudo apt-get install -y unzip zip
+      - name: Clone and Build AssetRipper
+        run: |
+          git clone --depth 1 https://github.com/AssetRipper/AssetRipper.git
+          cd AssetRipper
+          # Ищем файл .csproj, который относится к CLI
+          PROJ=$(find . -name '*CLI*.csproj' | head -n 1)
+          if [ -z "$PROJ" ]; then PROJ=$(find . -name '*.csproj' | grep -i cli | head -n 1); fi
+          if [ -z "$PROJ" ]; then PROJ=$(find . -name '*.csproj' | head -n 1); fi
+          echo "Собираем проект: $PROJ"
+          dotnet build $PROJ -c Release
+      - name: Export Unity
+        run: |
+          mkdir -p work
+          unzip -q apk/NoomiUnlocked.apk -d work
+          # Ищем собранный DLL
+          DLL=$(find AssetRipper -name '*CLI*.dll' | head -n 1)
+          if [ -z "$DLL" ]; then DLL=$(find AssetRipper -name '*.dll' | grep -i cli | head -n 1); fi
+          echo "Запускаем: $DLL"
+          dotnet $DLL work -o export
+          ls -la export || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unity-export
+          path: export/
