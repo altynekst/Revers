@@ -1,4 +1,4 @@
-name: Mod APK (No Ads via DNS)
+name: Mod APK (No Ads)
 on: workflow_dispatch
 
 jobs:
@@ -17,38 +17,15 @@ jobs:
           sudo apt-get install -y apktool zipalign apksigner >/dev/null
       - name: Unpack APK
         run: apktool d -f apk/NoomiClone.apk -o work
-      - name: Patch Network Security Config
+      - name: Patch Ads (Network block in smali)
         run: |
           cd work
-          # Создаем файл конфигурации, который блокирует рекламные домены
-          mkdir -p res/xml
-          cat > res/xml/network_security_config.xml << XML
-          <?xml version="1.0" encoding="utf-8"?>
-          <network-security-config>
-              <domain-config cleartextTrafficPermitted="true">
-                  <domain includeSubdomains="true">googleads.g.doubleclick.net</domain>
-                  <domain includeSubdomains="true">pagead2.googlesyndication.com</domain>
-                  <domain includeSubdomains="true">adservice.google.com</domain>
-                  <domain includeSubdomains="true">ads.vungle.com</domain>
-                  <domain includeSubdomains="true">api.vungle.com</domain>
-                  <domain includeSubdomains="true">gateway.unityads.unity3d.com</domain>
-                  <domain includeSubdomains="true">yandex.net</domain>
-                  <domain includeSubdomains="true">appmetrica.yandex.net</domain>
-                  <domain includeSubdomains="true">ironsource.mobi</domain>
-                  <domain includeSubdomains="true">supersonicads.com</domain>
-                  <domain includeSubdomains="true">imp.adplus.co.id</domain>
-              </domain-config>
-              <base-config cleartextTrafficPermitted="true">
-                  <trust-anchors>
-                      <certificates src="system" />
-                  </trust-anchors>
-              </base-config>
-          </network-security-config>
-          XML
-          # Внедряем этот конфиг в манифест
-          sed -i 's/<application/<application android:networkSecurityConfig="@xml\/network_security_config"/' AndroidManifest.xml
-      - name: Rebuild
-        run: apktool b work -o unsigned.apk
+          # Отключаем инициализацию рекламных SDK
+          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
+          find . -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
+          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
+      - name: Rebuild (with -c to avoid OOM)
+        run: apktool b work -o unsigned.apk -c
       - name: Sign
         run: |
           keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
