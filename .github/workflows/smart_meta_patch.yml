@@ -1,0 +1,51 @@
+name: Smart Metadata Patch
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y zipalign apksigner python3
+      - name: Patch Metadata
+        run: |
+          mkdir -p work && cd work
+          unzip -q ../apk/NoomiUnlocked.apk 'assets/bin/Data/Managed/Metadata/global-metadata.dat'
+          python3 - << 'PY'
+          import struct
+          path = 'assets/bin/Data/Managed/Metadata/global-metadata.dat'
+          with open(path, 'rb') as f: data = bytearray(f.read())
+          old_text = 'NOOMIUNLOCKED'
+          new_text = 'crack by tuman'
+          # Unity IL2CPP хранит строки в куче. Мы ищем маркер строки и меняем её.
+          old_bytes = old_text.encode('utf-8')
+          new_bytes = new_text.encode('utf-8')
+          # В global-metadata строки хранятся с префиксом длины (LEB128 или 4-байтовый int)
+          # Найдем точное место, где лежит строка
+          idx = data.find(old_bytes)
+          if idx != -1:
+              print(f'Строка найдена по адресу {idx}. Меняем...')
+              # Чтобы не сломать смещения (Unity не любит, когда меняется размер кучи),
+              # мы заменим 13 байт на 13 байт (crack by tuman = 13 символов).
+              data[idx:idx+13] = new_bytes.ljust(13, b'\x00')
+              with open(path, 'wb') as f: f.write(data)
+          else:
+              print('Строка не найдена в чистом виде. Возможно, она в UTF-16.')
+              old_bytes16 = old_text.encode('utf-16le')
+              new_bytes16 = new_text.encode('utf-16le')
+              idx = data.find(old_bytes16)
+              if idx != -1:
+                  data[idx:idx+26] = new_bytes16.ljust(26, b'\x00')
+                  with open(path, 'wb') as f: f.write(data)
+          PY
+          cd ..
+          cp apk/NoomiUnlocked.apk final.apk
+          zip -q -0 -j final.apk work/assets/bin/Data/Managed/Metadata/global-metadata.dat
+      - name: Sign
+        run: |
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
+          zipalign -p 4 final.apk aligned.apk || cp final.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-Cracked.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-Cracked.apk
