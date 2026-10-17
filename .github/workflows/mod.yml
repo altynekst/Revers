@@ -15,26 +15,34 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y apktool zipalign apksigner zip >/dev/null
+          # Находим, куда установился apktool, и делаем на него ссылку
+          APKTOOL_JAR=$(find /usr/share -name "apktool.jar" | head -n 1)
+          if [ -z "$APKTOOL_JAR" ]; then APKTOOL_JAR="/usr/share/java/apktool.jar"; fi
+          echo "APKTOOL_JAR=$APKTOOL_JAR" >> $GITHUB_ENV
       - name: Unpack, Patch and Rebuild classes.dex
         run: |
-          # Распаковываем только DEX (без тяжелых ресурсов)
           mkdir -p work
           cd work
+          # Распаковываем только DEX
           unzip -q ../apk/NoomiClone.apk "classes*.dex"
           
-          # Пропатчиваем DEX (вырезаем вызовы рекламы через baksmali/smali)
           for dex in classes*.dex; do
-            java -jar /usr/share/java/apktool.jar d "$dex" -o "smali_$dex"
-            # Отключаем Яндекс, Vungle, IronSource
+            # Декомпилируем DEX в smali
+            java -jar "$APKTOOL_JAR" d "$dex" -o "smali_$dex"
+            
+            # Вырезаем рекламу
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
             find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
-            java -jar /usr/share/java/apktool.jar b "smali_$dex" -o "$dex" -c
+            
+            # Собираем обратно DEX
+            java -jar "$APKTOOL_JAR" b "smali_$dex" -o "$dex" -c
             rm -rf "smali_$dex"
           done
           
-          # Заменяем DEX-файлы в оригинальном APK
+          # Заменяем старые DEX на новые прямо в APK
           cd ..
+          cp apk/NoomiClone.apk patched.apk
           zip -q -j patched.apk work/classes*.dex
       - name: Sign APK
         run: |
