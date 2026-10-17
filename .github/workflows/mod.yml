@@ -15,38 +15,38 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y zipalign apksigner zip >/dev/null
-      - name: Download apktool
+      - name: Download smali/baksmali
         run: |
-          # Скачиваем свежий apktool.jar прямо с официального репозитория
-          curl -sSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
-          # Скачиваем фреймворк для него (чтобы понимал Android)
-          curl -sSL -o framework.apk https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/framework-2.9.3.apk 2>/dev/null || true
-          # Инициализируем фреймворк
-          java -jar apktool.jar if framework.apk 2>/dev/null || true
+          # Скачиваем baksmali и smali (официальные утилиты Android)
+          curl -sSL -o baksmali.jar https://github.com/baksmali/smali/releases/download/v2.5.2/baksmali-2.5.2.jar
+          curl -sSL -o smali.jar https://github.com/baksmali/smali/releases/download/v2.5.2/smali-2.5.2.jar
       - name: Unpack, Patch and Rebuild classes.dex
         run: |
           mkdir -p work
           cd work
+          
           # Распаковываем только DEX
           unzip -q ../apk/NoomiClone.apk "classes*.dex"
           
           for dex in classes*.dex; do
+            echo "Обработка $dex..."
             # Декомпилируем DEX в smali
-            java -jar ../apktool.jar d "$dex" -o "smali_$dex" -f
+            java -jar ../baksmali.jar d "$dex" -o "out_$dex"
             
             # Вырезаем рекламу
-            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
-            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
-            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
+            find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
+            find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
+            find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
             
-            # Собираем обратно DEX (флаг -c копирует ресурсы без пересборки, чтобы не было OOM)
-            java -jar ../apktool.jar b "smali_$dex" -o "$dex" -c
-            rm -rf "smali_$dex"
+            # Собираем обратно DEX
+            java -jar ../smali.jar a "out_$dex" -o "$dex"
+            rm -rf "out_$dex"
           done
           
           # Заменяем старые DEX на новые прямо в APK
           cd ..
           cp apk/NoomiClone.apk patched.apk
+          # -j сбрасывает пути, чтобы classes.dex лег в корень APK
           zip -q -j patched.apk work/classes*.dex
       - name: Sign APK
         run: |
