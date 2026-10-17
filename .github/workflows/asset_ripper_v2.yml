@@ -1,0 +1,33 @@
+name: AssetRipper V2
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y unzip zip curl
+          # Точная ссылка на Linux-версию 0.3.4.0
+          curl -L -sS -o AssetRipper.zip https://github.com/AssetRipper/AssetRipper/releases/download/0.3.4.0/AssetRipper_linux_x64.zip
+          file AssetRipper.zip
+          unzip -q AssetRipper.zip -d AssetRipper
+          ls -la AssetRipper
+      - name: Export Unity
+        run: |
+          mkdir -p work
+          unzip -q apk/NoomiUnlocked.apk -d work
+          # Запускаем AssetRipper через dotnet или напрямую
+          if [ -f AssetRipper/AssetRipper ]; then
+            chmod +x AssetRipper/AssetRipper
+            ./AssetRipper/AssetRipper work -o export
+          elif [ -f AssetRipper/AssetRipper.dll ]; then
+            dotnet AssetRipper/AssetRipper.dll work -o export
+          else
+            find AssetRipper -type f -name '*.exe' -o -name '*.dll' -o -type f -executable
+          fi
+          ls -la export || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unity-export
+          path: export/
