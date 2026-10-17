@@ -1,0 +1,46 @@
+name: Fix Crack Text
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install UnityPy && sudo apt-get update -qq && sudo apt-get install -y zipalign apksigner
+      - name: Patch
+        run: |
+          mkdir -p work && cd work
+          unzip -q ../apk/NoomiUnlocked.apk "assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle"
+          mkdir -p output
+          python3 - << 'PY'
+          import UnityPy
+          path = 'assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle'
+          env = UnityPy.load(path)
+          for obj in env.objects:
+              if obj.type.name == 'MonoBehaviour':
+                  try:
+                      data = obj.read_typetree()
+                      if 'm_TableData' in data:
+                          for item in data['m_TableData']:
+                              if item.get('m_Localized') in ['NOOMIUNLOCKED', 'NoomiUnlocked', 'NoomiCheems']:
+                                  item['m_Localized'] = 'NOOMIU кряк by @usertuman'
+                          obj.save_typetree(data)
+                  except Exception:
+                      pass
+          env.save(out_path='output')
+          print('Текст заменен')
+          PY
+          cp output/*.bundle assets/aa/Android/
+          cd .. && cp apk/NoomiUnlocked.apk final.apk
+          zip -q -0 -j final.apk work/output/*.bundle
+      - name: Sign
+        run: |
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
+          zipalign -p 4 final.apk aligned.apk || cp final.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-Crack.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-Crack.apk
