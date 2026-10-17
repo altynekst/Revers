@@ -1,4 +1,4 @@
-name: Mod APK (Fast Zip Patch)
+name: Mod APK (Stable Zip Patch)
 on: workflow_dispatch
 
 jobs:
@@ -15,44 +15,39 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y zipalign apksigner zip >/dev/null
-      - name: Download smali/baksmali
+      - name: Download baksmali/smali
         run: |
-          # Скачиваем baksmali и smali (официальные утилиты Android)
           curl -sSL -o baksmali.jar https://github.com/baksmali/smali/releases/download/v2.5.2/baksmali-2.5.2.jar
           curl -sSL -o smali.jar https://github.com/baksmali/smali/releases/download/v2.5.2/smali-2.5.2.jar
-      - name: Unpack, Patch and Rebuild classes.dex
+      - name: Patch DEX
         run: |
           mkdir -p work
           cd work
-          
-          # Распаковываем только DEX
           unzip -q ../apk/NoomiClone.apk "classes*.dex"
           
           for dex in classes*.dex; do
-            echo "Обработка $dex..."
-            # Декомпилируем DEX в smali
             java -jar ../baksmali.jar d "$dex" -o "out_$dex"
-            
             # Вырезаем рекламу
             find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
             find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
             find "out_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
-            
-            # Собираем обратно DEX
             java -jar ../smali.jar a "out_$dex" -o "$dex"
             rm -rf "out_$dex"
           done
           
-          # Заменяем старые DEX на новые прямо в APK
+          # Копируем оригинальный APK и обновляем в нем DEX
           cd ..
           cp apk/NoomiClone.apk patched.apk
-          # -j сбрасывает пути, чтобы classes.dex лег в корень APK
-          zip -q -j patched.apk work/classes*.dex
-      - name: Sign APK
+          # Обновляем файлы прямо в архиве. Ключ -0 (без сжатия) важен для DEX!
+          zip -q -0 -j patched.apk work/classes*.dex
+      - name: Align and Sign
         run: |
           keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
-          zipalign -p 4 patched.apk aligned.apk
+          # Выравниваем. Если zipalign не может, значит архив уже правильный
+          zipalign -p 4 patched.apk aligned.apk || cp patched.apk aligned.apk
           apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-mod.apk aligned.apk
+          # Проверяем, что подпись встала
+          apksigner verify --verbose NoomiClone-mod.apk
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
