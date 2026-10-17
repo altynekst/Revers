@@ -17,27 +17,21 @@ jobs:
           mkdir -p extract
           unzip -q apk/NoomiUnlocked.apk "assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle" -d extract
           python3 - << 'PY'
-import UnityPy, json, os
+import UnityPy, json
 path = "extract/assets/aa/Android/localization-string-tables-russian(ru)_assets_all.bundle"
 env = UnityPy.load(path)
 found = []
 for obj in env.objects:
     if obj.type.name == "MonoBehaviour":
         try:
-            data = obj.read()
-            if hasattr(data, 'm_Name') and data.m_Name:
-                found.append(data.m_Name)
-            # Дамп всех строк в JSON
             tree = obj.read_typetree()
             with open("extract/dump.json", "a", encoding="utf-8") as f:
                 f.write(json.dumps(tree, ensure_ascii=False) + "\n")
-        except Exception as e:
+        except Exception:
             pass
-print("Найдено объектов:", len(found))
-print("Примеры имен:", found[:10])
+print("Дамп завершен")
 PY
-          # Ищем в JSON знакомые слова
-          grep -oE '"[^"]+"' extract/dump.json | head -50 > extract/strings.txt || true
+          grep -oE '"[^"]+"' extract/dump.json | head -100 > extract/strings.txt || true
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
