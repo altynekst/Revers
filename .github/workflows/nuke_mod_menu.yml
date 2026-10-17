@@ -1,0 +1,41 @@
+name: Nuke Mod Menu Text
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y zipalign apksigner python3
+      - run: pip install UnityPy
+      - name: Patch Level1
+        run: |
+          mkdir -p work && cd work
+          unzip -q ../apk/NoomiUnlocked.apk 'assets/bin/Data/level1'
+          python3 - << 'PY'
+          import UnityPy
+          env = UnityPy.load('assets/bin/Data/level1')
+          for obj in env.objects:
+              if obj.type.name == 'GameObject':
+                  try:
+                      data = obj.read_typetree()
+                      name = data.get('m_Name', '')
+                      if 'NOOMI' in name.upper() or 'UNLOCK' in name.upper() or 'TITLE' in name.upper() or 'TEXT' in name.upper():
+                          print(f'УДАЛЯЕМ ОБЪЕКТ: {name}')
+                          data['m_IsActive'] = 0 # Отключаем объект (он станет невидимым)
+                          obj.save_typetree(data)
+                  except Exception: pass
+          env.save(out_path='patched')
+          print('Сцена обновлена')
+          PY
+          cd ..
+          cp apk/NoomiUnlocked.apk final.apk
+          zip -q -0 -j final.apk work/patched/assets/bin/Data/level1
+      - name: Sign
+        run: |
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
+          zipalign -p 4 final.apk aligned.apk || cp final.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-NoMod.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-NoMod.apk
