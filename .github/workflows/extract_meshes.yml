@@ -1,0 +1,42 @@
+name: Extract 3D Meshes
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install UnityPy
+      - name: Extract
+        run: |
+          mkdir -p work
+          unzip -q apk/NoomiUnlocked.apk 'assets/bin/Data/*' -d work
+          python3 - << 'PY'
+          import UnityPy, os
+          os.makedirs('meshes', exist_ok=True)
+          for root, dirs, files in os.walk('work/assets/bin/Data'):
+              for f in files:
+                  p = os.path.join(root, f)
+                  # Проверяем только файлы ресурсов и сцен
+                  if '.' not in f or f.endswith('.assets') or f.endswith('.split0'):
+                      try:
+                          env = UnityPy.load(p)
+                          for obj in env.objects:
+                              if obj.type.name == 'Mesh':
+                                  try:
+                                      data = obj.read()
+                                      name = getattr(data, 'm_Name', 'unknown')
+                                      if 'NOOMI' in name.upper() or 'UNLOCK' in name.upper() or name == 'Text':
+                                          print('НАЙДЕН МЕШ:', name, 'В ФАЙЛЕ:', f)
+                                          with open(f'meshes/{name}.obj', 'w') as out:
+                                              out.write(data.export_obj())
+                                  except Exception as e: pass
+                      except Exception as e: pass
+          PY
+          ls -la meshes/ || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extracted-meshes
+          path: meshes/
