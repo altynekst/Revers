@@ -1,4 +1,4 @@
-name: Mod APK (No Ads)
+name: Mod APK (Fast Zip Patch)
 on: workflow_dispatch
 
 jobs:
@@ -14,22 +14,32 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y apktool zipalign apksigner >/dev/null
-      - name: Unpack APK
-        run: apktool d -f apk/NoomiClone.apk -o work
-      - name: Patch Ads (Network block in smali)
+          sudo apt-get install -y apktool zipalign apksigner zip >/dev/null
+      - name: Unpack, Patch and Rebuild classes.dex
         run: |
+          # Распаковываем только DEX (без тяжелых ресурсов)
+          mkdir -p work
           cd work
-          # Отключаем инициализацию рекламных SDK
-          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
-          find . -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
-          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
-      - name: Rebuild (with -c to avoid OOM)
-        run: apktool b work -o unsigned.apk -c
-      - name: Sign
+          unzip -q ../apk/NoomiClone.apk "classes*.dex"
+          
+          # Пропатчиваем DEX (вырезаем вызовы рекламы через baksmali/smali)
+          for dex in classes*.dex; do
+            java -jar /usr/share/java/apktool.jar d "$dex" -o "smali_$dex"
+            # Отключаем Яндекс, Vungle, IronSource
+            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
+            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
+            find "smali_$dex" -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
+            java -jar /usr/share/java/apktool.jar b "smali_$dex" -o "$dex" -c
+            rm -rf "smali_$dex"
+          done
+          
+          # Заменяем DEX-файлы в оригинальном APK
+          cd ..
+          zip -q -j patched.apk work/classes*.dex
+      - name: Sign APK
         run: |
           keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
-          zipalign -p 4 unsigned.apk aligned.apk
+          zipalign -p 4 patched.apk aligned.apk
           apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-mod.apk aligned.apk
       - name: Upload
         uses: actions/upload-artifact@v4
