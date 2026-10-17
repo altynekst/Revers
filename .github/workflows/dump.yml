@@ -1,0 +1,33 @@
+name: Dump IL2CPP
+on: workflow_dispatch
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y unzip >/dev/null
+      - name: Extract libs
+        run: |
+          mkdir -p extract
+          unzip -q apk/NoomiUnlocked.apk "lib/arm64-v8a/libil2cpp.so" -d extract
+          unzip -q apk/NoomiUnlocked.apk "assets/bin/Data/Managed/Metadata/global-metadata.dat" -d extract
+      - name: Download Il2CppDumper
+        run: |
+          curl -sSL -o Il2CppDumper.zip https://github.com/Perfare/Il2CppDumper/releases/download/v6.7.40/Il2CppDumper-net8-v6.7.40.zip
+          unzip -q Il2CppDumper.zip -d Il2CppDumper
+      - name: Run Dumper
+        run: |
+          cd extract
+          dotnet ../Il2CppDumper/Il2CppDumper.dll lib/arm64-v8a/libil2cpp.so assets/bin/Data/Managed/Metadata/global-metadata.dat out
+          ls -lh out/
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: il2cpp-dump
+          path: extract/out/
