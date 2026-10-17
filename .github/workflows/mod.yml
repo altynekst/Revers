@@ -1,0 +1,51 @@
+name: Mod APK (No Ads)
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y apktool zipalign apksigner >/dev/null
+
+      - name: Download and Unpack APK
+        run: |
+          cp apk/NoomiClone.apk original.apk
+          apktool d -f original.apk -o work
+
+      - name: Disable Ads (Smali Patch)
+        run: |
+          cd work
+          # Вырезаем вызовы инициализации рекламы
+          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/yandex\/mobile\/ads\/MobileAds;->initialize.*//g' {} +
+          find . -name "*.smali" -exec sed -i 's/invoke-virtual {.*}, Lcom\/vungle\/Vungle;->init.*//g' {} +
+          find . -name "*.smali" -exec sed -i 's/invoke-static {.*}, Lcom\/ironsource\/IronSource;->init.*//g' {} +
+          echo "Реклама вырезана"
+
+      - name: Rebuild APK
+        run: |
+          apktool b work -o unsigned.apk
+
+      - name: Sign APK
+        run: |
+          # Генерируем ключ прямо в облаке
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi Mod, O=Mod, C=NL"
+          # Выравниваем и подписываем
+          zipalign -p 4 unsigned.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-mod.apk aligned.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-mod.apk
