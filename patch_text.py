@@ -1,19 +1,19 @@
-import sys, struct, UnityPy
+import sys, struct
 d, level, old, new = sys.argv[1:5]
 path = f"{d}/{level}"
-env = UnityPy.load(path)
-def enc(s):
-    b = s.encode()
-    return struct.pack("<I", len(b)) + b + b"\x00" * ((4 - len(b) % 4) % 4)
-oe, ne = enc(old), enc(new)
-cnt = 0
-for o in env.objects:
-    raw = bytes(o.get_raw_data())
-    if oe in raw:
-        n = raw.count(oe); cnt += n
-        print("FOUND", o.type.name, "id", o.path_id, "x", n)
-        print("HEAD", raw[:64].hex())
-        o.set_raw_data(raw.replace(oe, ne))
-if not cnt: sys.exit("строка не найдена в " + level)
-open(path, "wb").write(env.file.save())
-print("OK заменено:", cnt)
+data = open(path, "rb").read()
+def pad4(n): return b"\x00" * ((4 - n % 4) % 4)
+ob = old.encode()
+pat = struct.pack("<I", len(ob)) + ob + pad4(len(ob))
+cnt = data.count(pat)
+if cnt != 1:
+    sys.exit(f"нужно ровно 1 совпадение, найдено {cnt}")
+cands = [new, "crack tuman", "by tuman"]
+txt = next((c for c in cands if len(c.encode()) <= len(ob)), None)
+if txt is None:
+    sys.exit("надпись слишком короткая для замены")
+nb = txt.encode().ljust(len(ob), b" ")
+rep = struct.pack("<I", len(ob)) + nb + pad4(len(ob))
+assert len(rep) == len(pat)
+open(path, "wb").write(data.replace(pat, rep))
+print("OK in-place:", repr(old), "->", repr(nb.decode()))
