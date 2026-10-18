@@ -55,6 +55,10 @@ jobs:
         if: inputs.mode == 'both'
         shell: bash
         run: ./build_both.sh "$APK" 2>&1 | tee patch.log
+      - name: dump
+        if: inputs.mode == 'dump'
+        shell: bash
+        run: ./dump.sh "$APK" 2>&1 | tee patch.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -63,6 +67,8 @@ jobs:
             inspect.txt
             scan.txt
             patch.log
+            dumpout/find.txt
+            dumpout/dump.cs
             findurl.txt
             out/patched.apk
           if-no-files-found: ignore
