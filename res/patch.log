@@ -1,15 +1,22 @@
-SO=d/lib/arm64-v8a/libil2cpp.so
-metadata: af1bb1fa version 39
-/home/runner/work/Revers/Revers/d/lib/arm64-v8a/libil2cpp.so: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=f35e93a208bdc736526be65c2d5321273b44a8ac, stripped
-Initializing metadata...
-System.NotSupportedException: ERROR: Metadata file supplied is not a supported version[39].
-Press any key to exit...
-Unhandled exception. System.InvalidOperationException: Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.
-./dump.sh: line 15:  2397 Done                    printf '\n'
-      2398 Aborted                 (core dumped) | dotnet Il2CppDumper.dll "$SOP" "$MD" "$OUT"
-total 12
-drwxr-xr-x  2 runner runner 4096 Oct 18 17:04 .
-drwxr-xr-x 11 runner runner 4096 Oct 18 17:04 ..
--rw-r--r--  1 runner runner 1032 Oct 18 17:04 dumper.log
-grep: dumpout/dump.cs: No such file or directory
-0 dumpout/find.txt
+SO=/home/runner/work/Revers/Revers/d/lib/arm64-v8a/libil2cpp.so
+Unity=6000.3.9f1
+sort: write failed: 'standard output': Broken pipe
+sort: write error
+имён из метаданных: 600
+Cpp2IL: https://github.com/SamboyCoding/Cpp2IL/releases/download/2022.0.7/Cpp2IL-2022.0.7-Linux
+BIN=c2i/Cpp2IL
+realpath: c2i/Cpp2IL: No such file or directory
+--- попытка 1 (APK): код 126
+timeout: failed to run command ‘tools/’: Permission denied
+realpath: c2i/Cpp2IL: No such file or directory
+--- попытка 2 (файлы): код 126
+timeout: failed to run command ‘tools/’: Permission denied
+файлов .cs: 0
+total 460
+drwxr-xr-x  2 runner runner   4096 Oct 18 17:06 .
+drwxr-xr-x 11 runner runner   4096 Oct 18 17:06 ..
+-rw-r--r--  1 runner runner 115442 Oct 18 17:06 all.zip
+-rw-r--r--  1 runner runner     63 Oct 18 17:06 c2i.log
+-rw-r--r--  1 runner runner     63 Oct 18 17:06 c2i2.log
+-rw-r--r--  1 runner runner 116077 Oct 18 17:06 find.txt
+-rw-r--r--  1 runner runner 216595 Oct 18 17:06 names.txt

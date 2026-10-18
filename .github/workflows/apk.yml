@@ -59,6 +59,10 @@ jobs:
         if: inputs.mode == 'dump'
         shell: bash
         run: ./dump.sh "$APK" 2>&1 | tee patch.log
+      - name: lits
+        if: inputs.mode == 'lits'
+        shell: bash
+        run: python lits.py "$APK" 2>&1 | tee patch.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -67,6 +71,7 @@ jobs:
             inspect.txt
             scan.txt
             patch.log
+            lits.tsv
             dumpout/find.txt
             dumpout/all.zip
             dumpout/dump.cs
