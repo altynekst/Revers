@@ -1,0 +1,53 @@
+name: Carpet Bomb Replace
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y zipalign apksigner python3
+      - name: Patch All Files
+        run: |
+          mkdir -p work && cd work
+          # Распаковываем всё
+          unzip -q ../apk/NoomiUnlocked.apk
+          python3 - << 'PY'
+          import os
+          old_u8 = b'NOOMIUNLOCKED'
+          new_u8 = b'crack by tuman'
+          old_u16 = 'NOOMIUNLOCKED'.encode('utf-16le')
+          new_u16 = 'crack by tuman'.encode('utf-16le')
+          count = 0
+          for root, dirs, files in os.walk('.'):
+              for f in files:
+                  p = os.path.join(root, f)
+                  try:
+                      with open(p, 'rb') as file: data = file.read()
+                      changed = False
+                      if old_u8 in data:
+                          data = data.replace(old_u8, new_u8)
+                          changed = True
+                      if old_u16 in data:
+                          data = data.replace(old_u16, new_u16)
+                          changed = True
+                      if changed:
+                          with open(p, 'wb') as file: file.write(data)
+                          print(f'Заменено: {p}')
+                          count += 1
+                  except Exception: pass
+          print(f'ИТОГО ФАЙЛОВ ИЗМЕНЕНО: {count}')
+          PY
+          cd ..
+          # Собираем архив обратно
+          rm -f final.apk
+          cd work
+          zip -q -r ../final.apk .
+      - name: Sign
+        run: |
+          keytool -genkeypair -v -keystore my.keystore -alias noomi -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Noomi, O=Mod, C=NL"
+          zipalign -p 4 final.apk aligned.apk || cp final.apk aligned.apk
+          apksigner sign --ks my.keystore --ks-pass pass:123456 --key-pass pass:123456 --out NoomiClone-Carpet.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-apk
+          path: NoomiClone-Carpet.apk
