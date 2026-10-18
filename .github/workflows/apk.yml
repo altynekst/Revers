@@ -68,6 +68,7 @@ jobs:
             scan.txt
             patch.log
             dumpout/find.txt
+            dumpout/all.zip
             dumpout/dump.cs
             findurl.txt
             out/patched.apk

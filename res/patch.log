@@ -1,17 +1,15 @@
 SO=d/lib/arm64-v8a/libil2cpp.so
+metadata: af1bb1fa version 39
+/home/runner/work/Revers/Revers/d/lib/arm64-v8a/libil2cpp.so: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[sha1]=f35e93a208bdc736526be65c2d5321273b44a8ac, stripped
 Initializing metadata...
 System.NotSupportedException: ERROR: Metadata file supplied is not a supported version[39].
-   at Il2CppDumper.Metadata..ctor(Stream stream) in C:\projects\il2cppdumper\Il2CppDumper\Il2Cpp\Metadata.cs:line 57
-   at Il2CppDumper.Program.Init(String il2cppPath, String metadataPath, Metadata& metadata, Il2Cpp& il2Cpp) in C:\projects\il2cppdumper\Il2CppDumper\Program.cs:line 123
-   at Il2CppDumper.Program.Main(String[] args) in C:\projects\il2cppdumper\Il2CppDumper\Program.cs:line 97
 Press any key to exit...
 Unhandled exception. System.InvalidOperationException: Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.
-   at System.ConsolePal.ReadKey(Boolean intercept)
-   at Il2CppDumper.Program.Main(String[] args) in C:\projects\il2cppdumper\Il2CppDumper\Program.cs:line 110
-./dump.sh: line 13:  2332 Done                    printf '\n'
-      2333 Aborted                 (core dumped) | dotnet Il2CppDumper.dll "$SOP" "$MD" "$OUT"
-total 8
-drwxr-xr-x  2 runner runner 4096 Oct 18 17:02 .
-drwxr-xr-x 11 runner runner 4096 Oct 18 17:02 ..
+./dump.sh: line 15:  2397 Done                    printf '\n'
+      2398 Aborted                 (core dumped) | dotnet Il2CppDumper.dll "$SOP" "$MD" "$OUT"
+total 12
+drwxr-xr-x  2 runner runner 4096 Oct 18 17:04 .
+drwxr-xr-x 11 runner runner 4096 Oct 18 17:04 ..
+-rw-r--r--  1 runner runner 1032 Oct 18 17:04 dumper.log
 grep: dumpout/dump.cs: No such file or directory
 0 dumpout/find.txt
