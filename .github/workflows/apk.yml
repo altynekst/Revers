@@ -2,7 +2,7 @@ name: noomi-patch
 on:
   workflow_dispatch:
     inputs:
-      mode:  { description: "inspect | patch", default: "inspect" }
+      mode:  { description: "inspect | patch | scan", default: "inspect" }
       apk:   { description: "APK в репо", default: "NoomiClone-mod.apk" }
       level: { description: "сцена", default: "level1" }
       tid:   { description: "Transform path_id", default: "0" }
@@ -19,6 +19,11 @@ jobs:
         run: |
           mkdir -p d && unzip -q "${{ inputs.apk }}" "assets/bin/Data/${{ inputs.level }}" -d d
           python inspect_level.py d/assets/bin/Data ${{ inputs.level }} | tee inspect.txt
+      - name: scan
+        if: inputs.mode == 'scan'
+        run: |
+          mkdir -p d && unzip -q "${{ inputs.apk }}" 'assets/bin/Data/level*' 'assets/bin/Data/sharedassets*' -d d
+          python scan.py d/assets/bin/Data | tee scan.txt
       - name: patch
         if: inputs.mode == 'patch'
         run: ./build_apk.sh "${{ inputs.apk }}" ${{ inputs.level }} ${{ inputs.tid }}
@@ -27,5 +32,6 @@ jobs:
           name: result
           path: |
             inspect.txt
+            scan.txt
             out/patched.apk
           if-no-files-found: ignore
