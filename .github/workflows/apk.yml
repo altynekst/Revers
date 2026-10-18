@@ -47,6 +47,10 @@ jobs:
         run: |
           mkdir -p d && unzip -q "$APK" -d d
           python find_url.py d | tee findurl.txt
+      - name: meta
+        if: inputs.mode == 'meta'
+        shell: bash
+        run: ./build_meta.sh "$APK" "$NEW" 2>&1 | tee patch.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
