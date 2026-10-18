@@ -1,0 +1,42 @@
+name: Dump All Texts Final
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y unzip python3
+      - run: pip install UnityPy
+      - name: Dump
+        run: |
+          mkdir -p work && cd work
+          # Вытаскиваем ВСЕ файлы данных
+          unzip -q ../apk/NoomiUnlocked.apk 'assets/bin/Data/*' 'assets/aa/*' -d .
+          python3 - << 'PY'
+          import UnityPy, os
+          out = open('found_noomi.txt', 'w', encoding='utf-8')
+          for root, dirs, files in os.walk('.'):
+              for f in files:
+                  p = os.path.join(root, f)
+                  if f.endswith('.bundle') or f.endswith('.assets') or f.startswith('level') or f.startswith('sharedassets'):
+                      try:
+                          env = UnityPy.load(p)
+                          for obj in env.objects:
+                              if obj.type.name in ['MonoBehaviour', 'TextMesh', 'Text']:
+                                  try:
+                                      data = obj.read_typetree()
+                                      for key, val in data.items():
+                                          if isinstance(val, str) and 'NOOMI' in val.upper():
+                                              line = f'[{p}] {key}: {val}\n'
+                                              print(line.strip())
+                                              out.write(line)
+                                  except Exception: pass
+                      except Exception: pass
+          out.close()
+          print('ГОТОВО')
+          PY
+          cat found_noomi.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: found-texts
+          path: work/found_noomi.txt
