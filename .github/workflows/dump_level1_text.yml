@@ -1,0 +1,34 @@
+name: Dump Level1 Text
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y unzip python3
+      - run: pip install UnityPy
+      - name: Dump
+        run: |
+          mkdir -p work && cd work
+          unzip -q ../apk/NoomiUnlocked.apk 'assets/bin/Data/level1'
+          python3 - << 'PY'
+          import UnityPy
+          env = UnityPy.load('assets/bin/Data/level1')
+          out = open('all_texts.txt', 'w', encoding='utf-8')
+          for obj in env.objects:
+              if obj.type.name in ['MonoBehaviour', 'TextMesh', 'Text']:
+                  try:
+                      data = obj.read_typetree()
+                      # Вытаскиваем ВСЕ поля, где может быть текст
+                      for key, val in data.items():
+                          if isinstance(val, str) and val.strip() != '':
+                              out.write(f'[{obj.type.name}] {key}: {val}\n')
+                  except Exception: pass
+          out.close()
+          print('Готово')
+          PY
+          cat all_texts.txt | head -50
+      - uses: actions/upload-artifact@v4
+        with:
+          name: level1-texts
+          path: work/all_texts.txt
