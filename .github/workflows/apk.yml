@@ -1,0 +1,31 @@
+name: noomi-patch
+on:
+  workflow_dispatch:
+    inputs:
+      mode:  { description: "inspect | patch", default: "inspect" }
+      apk:   { description: "APK в репо", default: "NoomiClone-mod.apk" }
+      level: { description: "сцена", default: "level1" }
+      tid:   { description: "Transform path_id", default: "0" }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install UnityPy
+      - name: inspect
+        if: inputs.mode == 'inspect'
+        run: |
+          mkdir -p d && unzip -q "${{ inputs.apk }}" "assets/bin/Data/${{ inputs.level }}" -d d
+          python inspect_level.py d/assets/bin/Data ${{ inputs.level }} | tee inspect.txt
+      - name: patch
+        if: inputs.mode == 'patch'
+        run: ./build_apk.sh "${{ inputs.apk }}" ${{ inputs.level }} ${{ inputs.tid }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: result
+          path: |
+            inspect.txt
+            out/patched.apk
+          if-no-files-found: ignore
