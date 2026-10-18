@@ -51,6 +51,10 @@ jobs:
         if: inputs.mode == 'meta'
         shell: bash
         run: ./build_meta.sh "$APK" "$NEW" 2>&1 | tee patch.log
+      - name: both
+        if: inputs.mode == 'both'
+        shell: bash
+        run: ./build_both.sh "$APK" 2>&1 | tee patch.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
