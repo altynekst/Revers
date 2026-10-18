@@ -2,13 +2,20 @@ name: noomi-patch
 on:
   workflow_dispatch:
     inputs:
-      mode:  { description: "inspect | patch | scan", default: "inspect" }
+      mode:  { description: "inspect | patch | scan | text", default: "inspect" }
       apk:   { description: "APK в репо", default: "NoomiClone-mod.apk" }
       level: { description: "сцена", default: "level1" }
       tid:   { description: "Transform path_id", default: "0" }
+      old:   { description: "старая строка", default: "NOOMICLONE" }
+      new:   { description: "новая строка", default: "crack by tuman" }
 jobs:
   run:
     runs-on: ubuntu-latest
+    env:
+      OLD: ${{ inputs.old }}
+      NEW: ${{ inputs.new }}
+      APK: ${{ inputs.apk }}
+      LEVEL: ${{ inputs.level }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -16,22 +23,31 @@ jobs:
       - run: pip install UnityPy
       - name: inspect
         if: inputs.mode == 'inspect'
+        shell: bash
         run: |
-          mkdir -p d && unzip -q "${{ inputs.apk }}" "assets/bin/Data/${{ inputs.level }}" -d d
-          python inspect_level.py d/assets/bin/Data ${{ inputs.level }} | tee inspect.txt
+          mkdir -p d && unzip -q "$APK" "assets/bin/Data/$LEVEL" -d d
+          python inspect_level.py d/assets/bin/Data "$LEVEL" | tee inspect.txt
       - name: scan
         if: inputs.mode == 'scan'
+        shell: bash
         run: |
-          mkdir -p d && unzip -q "${{ inputs.apk }}" 'assets/bin/Data/level*' 'assets/bin/Data/sharedassets*' -d d
+          mkdir -p d && unzip -q "$APK" 'assets/bin/Data/level*' 'assets/bin/Data/sharedassets*' -d d
           python scan.py d/assets/bin/Data | tee scan.txt
       - name: patch
         if: inputs.mode == 'patch'
-        run: ./build_apk.sh "${{ inputs.apk }}" ${{ inputs.level }} ${{ inputs.tid }}
+        shell: bash
+        run: ./build_apk.sh "$APK" "$LEVEL" ${{ inputs.tid }}
+      - name: text
+        if: inputs.mode == 'text'
+        shell: bash
+        run: ./build_text.sh "$APK" "$LEVEL" "$OLD" "$NEW" 2>&1 | tee patch.log
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: result
           path: |
             inspect.txt
             scan.txt
+            patch.log
             out/patched.apk
           if-no-files-found: ignore

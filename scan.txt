@@ -1,0 +1,56 @@
+=== level0: объектов 7
+=== level1: объектов 439
+  GameObject id=78 name='Noomi' hit=['noomi']
+  MonoBehaviour id=333 go=None '' hit=['noomi'] ctx=b'\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00NOOMICLONE\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+=== level10: объектов 247
+=== level11: объектов 174
+=== level12: объектов 137
+=== level13: объектов 90
+=== level14: объектов 176
+=== level15: объектов 102
+=== level16: объектов 258
+=== level17: объектов 259
+=== level18: объектов 129
+=== level19: объектов 955
+  GameObject id=84 name='Bar Noomi' hit=['noomi']
+  GameObject id=89 name='Noomi Controller' hit=['noomi']
+  MonoBehaviour id=768 go=None '' hit=['noomi'] ctx=b't\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\n\x00\x00\x00NoomiClone\x00\x00'
+=== level2: объектов 65
+=== level20: объектов 1132
+=== level21: объектов 772
+=== level22: объектов 5116
+=== level23: объектов 618
+=== level24: объектов 147
+=== level3: объектов 146
+=== level4: объектов 131
+=== level5: объектов 160
+=== level6: объектов 295
+=== level7: объектов 328
+=== level8: объектов 346
+=== level9: объектов 150
+=== sharedassets1.assets: объектов 72
+  Material id=3 go=None '' hit=['noomi'] ctx=b'\x05\x00\x00\x00noomi\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\t\x00\x00\x00\x08\x00\x00\x00_Bum'
+  MonoBehaviour id=65 go=None '' hit=['noomi'] ctx=b'\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\t\x00\x00\x00Red Noomi\x00\x00\x00\x00\x00\x00\x00\t\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff'
+=== sharedassets10.assets: объектов 1
+=== sharedassets11.assets: объектов 1
+=== sharedassets12.assets: объектов 1
+=== sharedassets13.assets: объектов 1
+=== sharedassets14.assets: объектов 1
+=== sharedassets15.assets: объектов 1
+=== sharedassets16.assets: объектов 1
+=== sharedassets17.assets: объектов 1
+=== sharedassets18.assets: объектов 1
+=== sharedassets19.assets: объектов 50
+=== sharedassets2.assets: объектов 3
+=== sharedassets20.assets: объектов 10
+=== sharedassets22.assets: объектов 22
+  Shader id=17 go=None '' hit=['noomi'] ctx=b'EXP2\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00Noomi/Water\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\t\x00\x00\x00\x12\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00'
+=== sharedassets23.assets: объектов 7
+=== sharedassets24.assets: объектов 1
+=== sharedassets3.assets: объектов 1
+=== sharedassets4.assets: объектов 1
+=== sharedassets5.assets: объектов 2
+=== sharedassets6.assets: объектов 3
+=== sharedassets7.assets: объектов 1
+=== sharedassets8.assets: объектов 1
+=== sharedassets9.assets: объектов 1
